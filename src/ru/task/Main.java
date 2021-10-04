@@ -3,6 +3,12 @@ package ru.task;
 import java.io.*;
 import java.util.Scanner;
 
+import java.io.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Scanner;
+
 public class Main {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
         Scanner in = new Scanner(System.in);
@@ -17,27 +23,27 @@ public class Main {
         table.printHashTable();
 
         //Добавление
-        System.out.println("Enter <NUMBER> <ADRESS>");
+        System.out.println("Введите <NUMBER> <ADRESS>");
         String addNum = in.next();
         String addAdress = in.next();
         table.insert(addNum, addAdress);
-        System.out.println("Complete!");
+        System.out.println("Выполнено!");
         table.printHashTable();
 
         //Поиск
-        System.out.printf("\nEnter the number you want to find: ");
+        System.out.printf("\nВведите номер, который вы хотите найти: ");
         String searchNum = in.next();
         System.out.printf(table.getTelefoNumber(searchNum).toString());
 
         //Удаление
-        System.out.println("\nEnter the number you want remove: ");
+        System.out.println("\nВведите номер, который вы хотите удалить: ");
         String removeNum = in.next();
         table.removeFunc(removeNum);
-        System.out.println("Complete!");
+        System.out.println("Выполнено!");
         table.printHashTable();
 
         //Время чтения
-        System.out.println("\nTesting Reading time");
+        System.out.println("\nТестирование времени чтения");
         long time = System.currentTimeMillis();
         table.getTelefoNumber("89266715863");
         System.out.println("Time is: " + (System.currentTimeMillis() - time) + "ms");
@@ -46,25 +52,61 @@ public class Main {
         long time2 = System.currentTimeMillis();
         ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
         HashTable tableNew = (HashTable) inputStream.readObject();
-        System.out.println("\nFrom the File: ");
+        System.out.println("\nДостаем из файла: ");
         tableNew.printHashTable();
         System.out.println("Time is: " + (System.currentTimeMillis() - time2) + "ms");
 
         //Тест рехеширования
         table = new HashTable(1);
-        System.out.println("\nTesting Reheshing");
+        System.out.println("\nТестирование рехеширования");
         //Создал таблицу на 1 элемент и добавил туда 3 элемента
         table.insert("89023482402", "Domodedovo");
         table.insert("89230301020", "Sheremet'evo");
         table.insert("89991301230", "Vnukovo");
         //Все элементы были добавлены
         table.printHashTable();
+
+        //---------------------------------------------
+
+        //Тест коллизии
+        System.out.println("\nТестирование коллизий: попробуем добавить в таблицу 2 одинаковых ключа");
+        HashTable table2 = new HashTable(2);
+        table2.insert("89999999999", "Sheremet'evo");
+        table2.insert("89999999999", "Vnukovo");
+
+        //Достаем из файла по файловому номеру '2'
+        System.out.println("\nТестирование доступа по файловому номеру: " +
+                "добавим в таблицу 5 записей и достанем значение по номеру '3'");
+        table2 = new HashTable(5);
+        table2.insert("89999999991", "Sheremet'evo");
+        table2.insert("89999999992", "Vnukovo");
+        table2.insert("89999999993", "Domodevo");
+        table2.insert("89999999994", "Vnukovo");
+        table2.insert("89999999995", "Vnukovo");
+
+        ObjectInputStream inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        HashTable tableNew2 = (HashTable) inputStream2.readObject();
+        ValueEntry valueEntry = tableNew2.getValueByFileNumber(3);
+        System.out.println("Значение: " + valueEntry);
+
+        //Удаление и получение по номеру
+        System.out.println("\nПопробуем удалить значение из файла с номером '3' и снова получить");
+        inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        tableNew2 = (HashTable) inputStream2.readObject();
+        tableNew2.removeValueByFileNumber(3);
+        System.out.println("Удалили, пробуем получить");
+
+        inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        tableNew2 = (HashTable) inputStream2.readObject();
+        valueEntry = tableNew2.getValueByFileNumber(3);
+        System.out.println("Значение: " + valueEntry);
     }
 }
 
 class ValueEntry implements Serializable  {
-    String telefonNumber; //key
+    String telefonNumber;
     String adress;
+    int fileNumber;
 
     ValueEntry(String telefonNumber, String adress) {
         this.telefonNumber = telefonNumber;
@@ -77,7 +119,7 @@ class ValueEntry implements Serializable  {
 
     @Override
     public String toString() {
-        return "PHONE: " + telefonNumber + " | ADRESS: " + adress;
+        return "PHONE: " + telefonNumber + " | ADRESS: " + adress + " | FileNumber: " + fileNumber;
     }
 }
 
@@ -93,6 +135,21 @@ class HashTable implements Serializable  {
         for (int i = 0; i < hashSize; i++)
             table[i] = null;
         totalSize = getPrime();
+    }
+
+    public ValueEntry getValueByFileNumber(int fileNumber) {
+        return Arrays.stream(table).filter(Objects::nonNull).filter(v -> v.fileNumber == fileNumber).findFirst().orElse(null);
+    }
+
+    public void removeValueByFileNumber(int fileNumber) {
+        for (int i = 0; i < table.length; i++) {
+            if(table[i] != null) {
+                if(table[i].fileNumber == fileNumber) {
+                    table[i] = null;
+                }
+            }
+        }
+        saveFile();
     }
 
     public int getPrime() {
@@ -137,13 +194,25 @@ class HashTable implements Serializable  {
         int hashing1 = hasingOne(telefonNumber);
         int hashing2 = hashingTwo(telefonNumber);
         while (table[hashing1] != null) {
+            int oldHash = hashing1;
             hashing1 += hashing2;
             hashing1 %= hashSize;
+
+            //Только на случай тестирования коллизии!!!
+//            System.out.println("При попытке добавления нового ключа " + telefonNumber +
+//                    " произошла коллизия и хеш '" + oldHash +
+//                    "' оказался занят. Сгенерировали новый: '" + hashing1 + "'");
         }
 
+        int nextFileNumber = getNextFileNumber();
         table[hashing1] = new ValueEntry(telefonNumber, adress);
+        table[hashing1].fileNumber = nextFileNumber;
         size++;
         saveFile();
+    }
+
+    public int getNextFileNumber() {
+        return Arrays.stream(table).filter(Objects::nonNull).mapToInt(v -> v.fileNumber).max().orElse(0) + 1;
     }
 
     public void removeFunc(String telefonNumber) {
