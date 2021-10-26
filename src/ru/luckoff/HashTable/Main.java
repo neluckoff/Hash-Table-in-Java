@@ -1,13 +1,10 @@
-package ru.task;
+package ru.luckoff.HashTable;
 
 import java.io.*;
 import java.util.Scanner;
 
-import java.io.*;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.Random;
-import java.util.Scanner;
 
 public class Main {
     public static void main(String[] args) throws IOException, ClassNotFoundException {
