@@ -47,7 +47,7 @@ public class Main {
 
         //Считываем с файла
         long time2 = System.currentTimeMillis();
-        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream("Test.txt"));
         HashTable tableNew = (HashTable) inputStream.readObject();
         System.out.println("\nДостаем из файла: ");
         tableNew.printHashTable();
@@ -81,19 +81,19 @@ public class Main {
         table2.insert("89999999994", "Vnukovo");
         table2.insert("89999999995", "Vnukovo");
 
-        ObjectInputStream inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        ObjectInputStream inputStream2 = new ObjectInputStream(new FileInputStream("Test.txt"));
         HashTable tableNew2 = (HashTable) inputStream2.readObject();
         ValueEntry valueEntry = tableNew2.getValueByFileNumber(3);
         System.out.println("Значение: " + valueEntry);
 
         //Удаление и получение по номеру
         System.out.println("\nПопробуем удалить значение из файла с номером '3' и снова получить");
-        inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        inputStream2 = new ObjectInputStream(new FileInputStream("Test.txt"));
         tableNew2 = (HashTable) inputStream2.readObject();
         tableNew2.removeValueByFileNumber(3);
         System.out.println("Удалили, пробуем получить");
 
-        inputStream2 = new ObjectInputStream(new FileInputStream("SiAOD_Test.txt"));
+        inputStream2 = new ObjectInputStream(new FileInputStream("Test.txt"));
         tableNew2 = (HashTable) inputStream2.readObject();
         valueEntry = tableNew2.getValueByFileNumber(3);
         System.out.println("Значение: " + valueEntry);
@@ -164,7 +164,7 @@ class HashTable implements Serializable  {
     public void saveFile() {
         ObjectOutputStream outputStream;
         try {
-            outputStream = new ObjectOutputStream(new FileOutputStream("SiAOD_Test.txt"));
+            outputStream = new ObjectOutputStream(new FileOutputStream("Test.txt"));
             outputStream.writeObject(this);
             outputStream.close();
         } catch (IOException e) {
